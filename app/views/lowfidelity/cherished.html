@@ -1,0 +1,257 @@
+{% extends "layout.html" %} {% block pageTitle %} GOV.UK Prototype Kit {% endblock %} {% block content %}
+
+<!--CHANGE AN ADDRESS NO CURRENT CUSTOM LINE 1-->
+
+<h1 class="govuk-heading-l">Change an address</h1>
+<h2 class="govuk-heading-m">What kind of change do you need to make?</h2>
+
+<div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="update" name="change-address" type="radio" value="update" data-aria-controls="conditional-update" checked>
+    <label class="govuk-label govuk-radios__label" for="update">
+    Update
+    </label>
+  </div>
+
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="correct" name="change-address" type="radio" value="correct">
+    <label class="govuk-label govuk-radios__label" for="correct">
+    Correct a mistake
+    </label>
+  </div>
+
+  <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-update">
+    <br>
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="update">
+        Update to new address
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="dlo">
+        Update the status to dead letter office
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="cherished">
+        Add a custom first line (for example: Flat B, Wirral Cottage, Room 17)
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+  </div>
+</div>
+
+<br>
+<button class="govuk-button" data-module="govuk-button">
+  Next
+</button>
+<p class="govuk-body"><a href="..">Cancel</a></p>
+
+<br>
+<br>
+<p>-------------------------</p>
+<br>
+<br>
+
+
+<!--CHANGE AN ADDRESS WITH CURRENT CUSTOM LINE 1-->
+
+<h1 class="govuk-heading-l">Change an address</h1>
+<h2 class="govuk-heading-m">What kind of change do you need to make?</h2>
+
+<div class="govuk-radios govuk-radios--conditional" data-module="govuk-radios">
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="update1" name="change-address1" type="radio" value="update1" data-aria-controls="conditional-update1" checked>
+    <label class="govuk-label govuk-radios__label" for="update">
+    Update
+    </label>
+  </div>
+
+  <div class="govuk-radios__item">
+    <input class="govuk-radios__input" id="correct1" name="change-address1" type="radio" value="correct1">
+    <label class="govuk-label govuk-radios__label" for="correct">
+    Correct a mistake
+    </label>
+  </div>
+
+  <div class="govuk-radios__conditional govuk-radios__conditional--hidden" id="conditional-update1">
+    <br>
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="update">
+        Update to new address
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="dlo">
+        Update the status to dead letter office
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="cherished">
+        Add a custom first line (for example: Flat B, Wirral Cottage, Room 17)
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+    <div class="govuk-radios__item">
+      <label class="govuk-label govuk-radios__label" for="cherished">
+        Remove a custom first line
+      </label>
+      <input class="govuk-radios__input">
+    </div>
+
+  </div>
+</div>
+
+<br>
+<button class="govuk-button" data-module="govuk-button">
+  Next
+</button>
+<p class="govuk-body"><a href="..">Cancel</a></p>
+
+<br>
+<br>
+<p>-------------------------</p>
+<br>
+<br>
+
+
+<!--ADD CHERISHED LINE-->
+
+<h1 class="govuk-heading-l">Add a custom first line</h1>
+<h2 class="govuk-heading-m">What is the custom first line for this address?</h2>
+<p class="govuk-hint">For example: Flat B, Wirral Cottage, Room 17</p>
+
+<div class="govuk-form-group">
+  <input class="govuk-input govuk-input--width-10" id="width-10" name="width-10" type="text">
+</div>
+
+<p>Weedunnit<br>
+New Byth<br>
+Turriff<br>
+Aberdeenshire<br>
+AB53 5UA</p>
+
+<br>
+<button class="govuk-button" data-module="govuk-button">
+  Next
+</button>
+<p class="govuk-body"><a href="..">Cancel</a></p>
+
+<br>
+<br>
+<p>-------------------------</p>
+<br>
+<br>
+
+
+<!--UPDATE CHERISHED LINE-->
+
+<h1 class="govuk-heading-l">Update a custom first line</h1>
+<h2 class="govuk-heading-m">What is the custom first line for this address?</h2>
+<p class="govuk-hint">For example: Flat B, Wirral Cottage, Room 17</p>
+
+<div class="govuk-form-group">
+  <input class="govuk-input govuk-input--width-10" id="width-10" name="width-10" type="text" value="Flat 3">
+</div>
+
+<p>Weedunnit<br>
+New Byth<br>
+Turriff<br>
+Aberdeenshire<br>
+AB53 5UA</p>
+
+<br>
+<button class="govuk-button" data-module="govuk-button">
+  Next
+</button>
+<p class="govuk-body"><a href="..">Cancel</a></p>
+
+<br>
+<br>
+<p>-------------------------</p>
+<br>
+<br>
+
+
+<!--ADD CORRESPONDENCE ADDRESS-->
+
+<h1 class="govuk-heading-l">Add a correspondence address</h1>
+
+<div class="govuk-form-group">
+  <fieldset class="govuk-fieldset" aria-describedby="changed-name-hint">
+    <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+      <h2 class="govuk-heading-m">
+        Is this address in the United Kingdom?
+      </h2>
+    </legend>
+    <div class="govuk-radios govuk-radios--inline">
+      <div class="govuk-radios__item">
+        <input class="govuk-radios__input" id="uk-address" name="uk-address" type="radio" value="yes" checked>
+        <label class="govuk-label govuk-radios__label" for="uk-address">
+          Yes
+        </label>
+      </div>
+      <div class="govuk-radios__item">
+        <input class="govuk-radios__input" id="non-uk-address" name="non-uk-address" type="radio" value="no">
+        <label class="govuk-label govuk-radios__label" for="non-uk-address">
+          No
+        </label>
+      </div>
+    </div>
+
+  </fieldset>
+</div>
+
+<h2 class="govuk-heading-s">Select an address</h2>
+
+<div class="govuk-form-group">
+  <label class="govuk-label" for="sort">
+    Address
+  </label>
+  <select class="govuk-select" id="sort" name="sort" {width: 200%}>
+    <option value="updated" selected>18 Ashwood Close, NEWCASTLE UPON TYNE
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    </option>
+  </select>
+</div>
+
+<div class="govuk-form-group">
+  <label class="govuk-label" for="width-20">
+    Custom first line (optional)
+  </label>
+  <div id="account-number-hint" class="govuk-hint">
+    For example: Flat B, Wirral Cottage, Room 17
+  </div>
+  <input class="govuk-input govuk-input--width-20" id="width-20"
+</div>
+
+<br>
+<br>
+
+<p>18 Ashwood Close<br>
+  Newcastle Upon Tyne<br>
+  NE18 8DM</p>
+
+<div class="govuk-button-group">
+  <button class="govuk-button" data-module="govuk-button">
+    Continue
+  </button>
+
+  <button class="govuk-button govuk-button--secondary" data-module="govuk-button">
+    New search
+  </button>
+</div>
+
+
+
+
+{% endblock %}
