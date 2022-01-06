@@ -187,24 +187,24 @@ paths:
 
 components:
   parameters:
-    CitizenGUID: #(note changed from ConsumerGuid, but probs have to change back if pre-existing)
-      name: citizen-guid
-      description: "A unique DWP identifier for a citizen obtained from a separate, independent call to the Citizen API (Match) service."
+    ConsumerGuid:
+      name: 'consumerGuid'
+      description: A unique DWP identifier for a Citizen obtained from a separate, independent call to the Citizen API / Match Service.
       in: path
       required: true
       schema:
         type: string
     AuthorisationBearer:
-      name: authorisation-bearer
+      name: 'Authorisation:Bearer'
       in: header
-      description: "The OAUTH2 Access token." #(query that - referred to as OAuth 2.0 in the spuuporting docs and OAUTH2 here - also, capital 'A' on access?)
+      description: The OAUTH2 Access token.
       required: true
       schema:
         type: string
     CorrelationID:
       name: correlation-id
       in: header
-      description: "Identifier used to locate related transactions." #(check assumption, these are all things that already exist)
+      description: Identifier used to locate related transactions
       example: "12345678-1234-1234-1234-123456789012"
       required: true
       schema:
@@ -212,21 +212,21 @@ components:
     InstigatingOrganisation:
       name: instigating-organisation
       in: header
-      description: "Validated against DWP's master External Organisation Catalogue."
+      description: Validated against DWP's master External Organisation Catalogue.
       required: true
       schema:
         type: string
     InstigatingSystem:
       name: instigating-system
       in: header
-      description: "External: Name of sending external system." #(why say 'External:')
+      description: 'External: Name of sending external system, for example an external system or application name.'
       required: true
       schema:
         type: string
     InstigatingUserId:
       name: instigating-user-id
       in: header
-      description: "External: ID number of the logged in user." #(why say 'External:' - is it a number?)
+      description: 'External: Identifier of the logged in User ID (used for auditing if auditing is enabled.'
       required: true
       schema:
         type: string
@@ -241,7 +241,7 @@ components:
     SessionId:
       name: session-id
       in: header
-      description: "" #(It's BLANK, you animals!)
+      description: "" #(Description needed)
       required: false
       schema:
         type: string
@@ -253,7 +253,7 @@ components:
       schema:
         type: string
     CacheControl:
-      name: cache-control #probs have to change back if pre-existing
+      name: Cache-Control
       in: header
       description: "Ensures response is not cached."
       required: true
@@ -359,7 +359,7 @@ components:
           maxLength: 10
         typeOfStay:
           $ref: '#/components/schemas/TypeOfStay'
-        futureAddress: #It's not in the future though, is it? It's the address after the care home. afterCareAddress, newAddress, etc - miruna/business Architecture
+        futureAddress: #Clarify: are we expecting to get this *before* it happens? Otherwise it's not 'future', it's newAddress, afterCareAddress, etc. I;ve rewritten the descriptions for the scenario where we are informed after the event.
           type: object
           properties:
             futureAddressUprn:
@@ -396,7 +396,7 @@ components:
           $ref: '#/components/schemas/LocalAuthorityId'
         hospitalAddress:
           $ref: '#/components/schemas/HospitalAddress'
-        currentHospitalAdmissionDate:
+        currentHospitalAdmissionDate: #Clarify: this is not 'current' hopsital stay have a discharge date? What does 'current' mean in this context? Do we expect LAs to inform us when a citizen in a Care Home is admitted to hospital? Will they know?
           type: string
           description: "The date of admission to hospital."
           pattern: "yyyy-MM-dd"
@@ -428,7 +428,7 @@ components:
       properties:
         careHomeId:
           type: string
-          description: "To be provided in addition to the care home address OR UPRFalse (optional). CQC registration number/id." #Why only CQC - what about the other ones? Miruna/bus architecture
+          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id." #Why only CQC - what about the other ones for the other regions?
           example: "SIN-12345678-abcd"
           maxLength: 17
         careHomeRoomNumber:
