@@ -1,0 +1,830 @@
+openapi: 3.0.3
+# Version History:
+# Date        Version   Description
+# 02/07/2021  0.0.1     Initial Draft
+# 21/07/2021  0.0.2     Added UPRN to all addresses
+#                       Removed title from Citizen
+#                       NINO not mandatory
+#                       Confirm 404 (citizen not of interest) changed to straight 204
+#                       Updated data items as per DD v0.6 & DM v0.7
+# 21/07/2021  0.0.3     Updates following API Spec review 21/07/2021
+# 21/07/2021  0.1.0     Incorporated final updates from Data Dictionary.
+# 24/09/2021  0.1.1     Updated residential mandatory fields.
+# 19/10/2021  0.2.0     Updated Confirm and Notify based on 3 call process.
+# 25/10/2021  0.3.0     Notify endpoints consolidated from 5 to 1.
+# 25/10/2021  0.3.1     ClaimantId changed to ConsumerGUID.
+# 02/11/2021  0.3.2     Re-aligned with Interface Spec and DM.
+# 18/11/2021  0.3.3     Updated descriptions and renamed some entities.
+# 19/11/2021  0.3.4     FundingChange renamed to FundingDetails, JSON:API restructured.
+
+
+info:
+  title: Care Homes Information Service
+  description: |-
+
+    *** This is a draft document, this service is not in Production. ***
+
+    The service provides two endpoints.  One is used to 'confirm' a citizen is of interest in regards to their care home residency status and the other is used to 'notify' DWP of a change in their residency status.
+
+    The /confirm/{consumerGuid} endpoint takes a GET and is used to confirm whether the identified citizen's care home status is of interest to DWP.  The Consumer GUID provided identifies the citizen
+    and is obtained by a separate call to the Citizen API / Match service.
+
+    The /notify/{consumerGuid} endpoint takes a POST and is used to notify DWP of a change in a citizen's care home residency for the distinct notification types given below,
+    by supplying a corresponding object within the JSON payload (no more than one of each notification type, minimum of one notification) :
+    <ul>
+      <li> Admission (admission) - initial admission to a care home or re-admission to the same care home.
+      <li> Change of circumstances (changeOfCircumstances) - e.g. moving to a new care home
+      <li> Leaving a care home (leavingCareHome)
+      <li> Hospital admission (hospitalAdmission)
+      <li> Funding change (fundingChange)
+    </ul>
+
+    The Consumer GUID provided identifies the citizen the notification is for.
+    <br><br>
+    There are certain header fields required in each API call as detailed below -
+
+    | Attribute (M/O) | Type | Description |
+    | ---------| ---------- | ---------- |
+    | `Authorisation:Bearer (M)` |   String   | The OAUTH2 Access token. |
+    | `correlation-id (M)` |   String   | Unique correlation identifier for tracking purpose |
+    | `instigating-organisation (M)` |   String   | Validated against DWP's master External Organisation Catalogue |
+    | `instigating-system (M)` |   String   | External: Name of sending external system e.g. an external system or application name |
+    | `instigating-user-id (M)` |   String   | Identifier of the logged in User ID (used for auditing if auditing is enabled) |
+    | `transaction-date (M)` |  DateTime  | Date & time when the communication was instigated |
+    | `session-id (O)` |  String  |  |
+    | `context (O)` |  String  | This describes the business process that is being enacted and the system enacting it |
+    | `Cache-Control (M - confirm)` |  String  | Value : no-store - Ensures Confirm responses are not cached |
+  version: "0.3.2"
+  termsOfService: urn:tos
+  contact: { }
+servers:
+  - url: 'http://localhost:8080'
+tags:
+  - name: Confirm
+    description: Confirm citizen is in receipt of an award which makes them a person of interest when it comes to a change
+      in circumstances around their Care Home residency.
+  - name: Notify
+    description: Notify DWP of a change of circumstances for a citizen in regard to Care Home residency.
+
+security:
+  - Oauth2: []
+
+paths:
+  /confirm/{consumerGuid}:
+    get:
+      tags:
+        - Confirm
+      summary: Confirm whether the citizen, identified by the Consumer GUID, is a person of interest.
+      description: 'The GET checks whether the citizen identified by the supplied Consumer GUID is of interest
+        to DWP.   The API will check to see if the citizen is in receipt of any current claims / awards to determine whether or
+        not their status is of interest.<br>
+        If the citizen is identified as a person of interest then the API will return code 204. <br>
+        If the citizen is identified as NOT being a person of interest then the API will return code 404.
+'
+      operationId: confirmInterest
+      parameters:
+        - $ref: '#/components/parameters/ConsumerGuid'
+        - $ref: '#/components/parameters/AuthorisationBearer'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/InstigatingOrganisation'
+        - $ref: '#/components/parameters/InstigatingSystem'
+        - $ref: '#/components/parameters/InstigatingUserId'
+        - $ref: '#/components/parameters/CacheControl'
+        - $ref: '#/components/parameters/TransactionDate'
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/Context'
+      responses:
+        204:
+          description: No Content - The citizen is of interest.
+        400:
+          description: Bad Request.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error400Details'
+        404:
+          description: Not Found - No citizen of interest found matching the data supplied.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error404ConfirmDetails'
+        405:
+          description: Method Not Allowed.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error405Details'
+        422:
+          description: Unprocessable Entity.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error422Details'
+        503:
+          description: Service Unavailable.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error503Details'
+
+
+  /notify/{consumerGuid}:
+    post:
+      tags:
+        - Notify
+      summary: Notify DWP of a change in a citizen's circumstances (citizen is identified by the Consumer GUID) in respect of their care home provision.
+      operationId: notify
+      description: 'The POST /notify/{consumerGuid} API notifies DWP of a change in a citizen''s care home provision.
+      Specific notification types are incorporated into the JSON payload.'
+      parameters:
+        - $ref: '#/components/parameters/ConsumerGuid'
+        - $ref: '#/components/parameters/AuthorisationBearer'
+        - $ref: '#/components/parameters/CorrelationID'
+        - $ref: '#/components/parameters/InstigatingOrganisation'
+        - $ref: '#/components/parameters/InstigatingSystem'
+        - $ref: '#/components/parameters/InstigatingUserId'
+        - $ref: '#/components/parameters/TransactionDate'
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/Context'
+      requestBody:
+        description: Information about the citizen's care home provision.
+        content:
+          application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+            schema:
+              $ref: '#/components/schemas/NotifyJSONAPI'
+        required: true
+      responses:
+        202:
+          description: Accepted
+        400:
+          description: Bad Request.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error400Details'
+        405:
+          description: Method Not Allowed.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error405Details'
+        422:
+          description: Unprocessable Entity.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error422Details'
+
+        503:
+          description: Service Unavailable.
+          content:
+            application/vnd.api+json, application/vnd.dwp.carehomes.v1+json:
+              schema:
+                $ref: '#/components/schemas/Error503Details'
+
+
+components:
+  parameters:
+    ConsumerGuid:
+      name: 'consumerGuid'
+      description: A unique DWP identifier for a Citizen obtained from a separate, independent call to the Citizen API / Match Service.
+      in: path
+      required: true
+      schema:
+        type: string
+    AuthorisationBearer:
+      name: 'Authorisation:Bearer'
+      in: header
+      description: The OAUTH2 Access token.
+      required: true
+      schema:
+        type: string
+    CorrelationID:
+      name: correlation-id
+      in: header
+      description: Identifier used to locate related transactions (e.g. 12345678-1234-1234-1234-123456789012)
+      required: true
+      schema:
+        type: string
+    InstigatingOrganisation:
+      name: instigating-organisation
+      in: header
+      description: Validated against DWP's master External Organisation Catalogue.
+      required: true
+      schema:
+        type: string
+    InstigatingSystem:
+      name: instigating-system
+      in: header
+      description: 'External: Name of sending external system e.g. an external system or application name.'
+      required: true
+      schema:
+        type: string
+    InstigatingUserId:
+      name: instigating-user-id
+      in: header
+      description: 'External: Identifier of the logged in User ID (used for auditing if auditing is enabled.'
+      required: true
+      schema:
+        type: string
+    TransactionDate:
+      name: transaction-date
+      in: header
+      description: "Date & time when the communication was instigated"
+      example: "2021-05-21T17:12:34"
+      required: true
+      schema:
+        type: string
+    SessionId:
+      name: session-id
+      in: header
+      description: ""
+      required: false
+      schema:
+        type: string
+    Context:
+      name: context
+      in: header
+      description: "This describes the business process that is being enacted and the system enacting it."
+      required: false
+      schema:
+        type: string
+    CacheControl:
+      name: Cache-Control
+      in: header
+      description: "Ensures response is not cached."
+      required: true
+      schema:
+        type: string
+        enum:
+          - no-store
+
+  schemas:
+    NotifyJSONAPI:
+      allOf:
+        - type: object
+          properties:
+            jsonapi:
+              type: object
+              properties:
+                version:
+                  type: string
+                  example: "1.0"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                type:
+                  type: string
+                  value: "notifications"
+                atrributes:
+                  $ref: '#/components/schemas/Attributes'
+
+    Attributes:
+      type: object
+      properties:
+        admission:
+          $ref: '#/components/schemas/CareHomeChange'
+        changeOfCircumstances:
+          $ref: '#/components/schemas/CareHomeChange'
+        leavingCareHome:
+          $ref: '#/components/schemas/LeavingCareHome'
+        hospitalAdmission:
+          $ref: '#/components/schemas/HospitalAdmission'
+        fundingDetails:
+          $ref: '#/components/schemas/FundingDetails'
+
+    CareHomeChange:
+      type: object
+      properties:
+        localAuthorityId:
+          $ref: '#/components/schemas/LocalAuthorityId'
+        careHomeStay:
+          $ref: '#/components/schemas/CareHomeStay'
+        funding:
+          $ref: '#/components/schemas/Funding'
+        previousAddress:
+          type: object
+          properties:
+            previousAddressUprn:
+              $ref: '#/components/schemas/UPRN'
+              description: "We are expecting a UPRFalse or the full address, but not both."
+            previousAddressLine1:
+              $ref: '#/components/schemas/AddressLine1'
+              description: "Building Name or number."
+            previousAddressLine2:
+              $ref: '#/components/schemas/AddressLine2'
+              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+            previousAddressLine3:
+              $ref: '#/components/schemas/AddressLine3'
+              description: "The previous address at which the citizen lived immediately prior to moving into care home. "
+            previousCity:
+              $ref: '#/components/schemas/AddressCity'
+              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+            previousPostCode:
+              $ref: '#/components/schemas/AddressPostCode'
+              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+            previousCountry:
+              $ref: '#/components/schemas/AddressCountry'
+              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+        previousHospitalAdmissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hospitalisation'
+      required:
+        - localAuthorityId
+
+    LeavingCareHome:
+      type: object
+      properties:
+        localAuthorityId:
+          $ref: '#/components/schemas/LocalAuthorityId'
+        careHome:
+          $ref: '#/components/schemas/CareHome'
+        careAdmissionDate:
+          type: string
+          description: "The date the citizen was admitted to the care home."
+          pattern: "yyyy-MM-dd"
+          example : "2021-01-28"
+          maxLength: 10
+        careDischargeDate:
+          type: string
+          description: "The date the citizen was discharged from the care home."
+          pattern: "yyyy-MM-dd"
+          example : "2021-01-28"
+          maxLength: 10
+        typeOfStay:
+          $ref: '#/components/schemas/TypeOfStay'
+        futureAddress:
+          type: object
+          properties:
+            futureAddressUprn:
+              $ref: '#/components/schemas/UPRN'
+              description: "We are expecting a UPRFalse or the full address, but not both."
+            futureAddressLine1:
+              $ref: '#/components/schemas/AddressLine1'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+            futureAddressLine2:
+              $ref: '#/components/schemas/AddressLine2'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+            futureAddressLine3:
+              $ref: '#/components/schemas/AddressLine3'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+            futureCity:
+              $ref: '#/components/schemas/AddressCity'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+            futurePostCode:
+              $ref: '#/components/schemas/AddressPostCode'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+            futureCountry:
+              $ref: '#/components/schemas/AddressCountry'
+              description: "The future address to which the citizen will be going after they move out of a care home."
+      required:
+        - localAuthorityId
+        - careAdmissionDate
+        - careDischargeDate
+        - typeOfStay
+
+    HospitalAdmission:
+      type: object
+      properties:
+        localAuthorityId:
+          $ref: '#/components/schemas/LocalAuthorityId'
+        hospitalAddress:
+          $ref: '#/components/schemas/HospitalAddress'
+        currentHospitalAdmissionDate:
+          type: string
+          description: "The date of admission to hospital, for the current stay."
+          pattern: "yyyy-MM-dd"
+          example : "2021-04-28"
+          maxLength: 10
+        currentHospitalDischargeDate:
+          type: string
+          description: "The date of discharge from hospital, for the stay."
+          pattern: "yyyy-MM-dd"
+          example : "2021-05-28"
+          maxLength: 10
+      required:
+        - localAuthorityId
+
+    FundingDetails:
+      type: object
+      properties:
+        localAuthorityId:
+          $ref: '#/components/schemas/LocalAuthorityId'
+        careHome:
+          $ref: '#/components/schemas/CareHome'
+        funding:
+          $ref: '#/components/schemas/Funding'
+      required:
+        - localAuthorityId
+
+    CareHome:
+      type: object
+      properties:
+        careHomeId:
+          type: string
+          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id."
+          example: "SIN-12345678-abcd"
+          maxLength: 17
+        careHomeRoomNumber:
+          type: string
+          description: "The room number assigned to a citizen throughout a given stay in a Care Home."
+          example: "123"
+          maxLength: 3
+        careHomeUprn:
+          $ref: '#/components/schemas/UPRN'
+        careHomeAddressLine1:
+          $ref: '#/components/schemas/AddressLine1'
+        careHomeAddressLine2:
+          $ref: '#/components/schemas/AddressLine2'
+        careHomeAddressLine3:
+          $ref: '#/components/schemas/AddressLine3'
+        careHomeCity:
+          $ref: '#/components/schemas/AddressCity'
+        careHomePostCode:
+          $ref: '#/components/schemas/AddressPostCode'
+        careHomeCountry:
+          $ref: '#/components/schemas/AddressCountry'
+      required:
+        - careHomeAddressLine1
+        - careHomeAddressLine2
+        - careHomePostCode
+
+    HospitalAddress:
+      type: object
+      properties:
+        hospitalName:
+          type: string
+          description: "Name of the hospital."
+          example: "General Hospital"
+          maxLength: 50
+        hospitalUprn:
+          $ref: '#/components/schemas/UPRN'
+          description: "We are expecting a UPRN or the full address, but not both. Hospital address/UPRN are optional as it may not always be available."
+        hospitalAddressLine1:
+          $ref: '#/components/schemas/AddressLine1'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+        hospitalAddressLine2:
+          $ref: '#/components/schemas/AddressLine2'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+        hospitalAddressLine3:
+          $ref: '#/components/schemas/AddressLine3'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+        hospitalCity:
+          $ref: '#/components/schemas/AddressCity'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+        hospitalPostCode:
+          $ref: '#/components/schemas/AddressPostCode'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+        hospitalCountry:
+          $ref: '#/components/schemas/AddressCountry'
+          description: "The address of the hospital the citizen is currently  admitted to, if known."
+
+    Hospitalisation:
+      type: object
+      properties:
+        hospitalAddress:
+          $ref: '#/components/schemas/HospitalAddress'
+        isCurrentlyHospitalised:
+          type: boolean
+          description: "A True/False value to indicate whether the citizen is currently hospitalised."
+          example: false
+        currentHospitalAdmissionDate:
+          type: string
+          description: "The most recent hospital admission date, where there has been one within a month prior to going to a care home."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        currentHospitalDischargeDate:
+          type: string
+          description: "The most recent hospital discharge date, which could be the same date as the care home admission date."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        hospitalisedInPreviousMonth:
+          type: string
+          description: "A Truee/False/Unknown value to indicate whether the citizen has been hospitalised in previous month."
+          example: true
+          maxLength: 7
+        previousHospitalAdmissionDate:
+          type: string
+          description: "The date citizen was admitted to the hospital in previous stay."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        previousHospitalDischargeDate:
+          type: string
+          description: "The date citizen was discharged from the hospital dureing previous stay."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+
+    Funding:
+      type: object
+      properties:
+        careType:
+          $ref: '#/components/schemas/CareType'
+        fundingDecisionNotifiedDate:
+          type: string
+          pattern: "yyyy-MM-dd"
+          example: "2017-01-19"
+          description: "The date on which a citizen is notified by the LA about the funding decision (i.e. who pays for the stay in the care home)."
+          maxLength: 10
+        fundingType:
+          $ref: '#/components/schemas/FundingType'
+        isCurrentlyFunded:
+          type: boolean
+          example: true
+          description: "A True/False value to indicate whether the citizen's stay in a care home is currently funded."
+        legislation:
+          $ref: '#/components/schemas/Legislation'
+        scottishQuestions:
+          $ref: '#/components/schemas/ScottishQuestions'
+        paymentNotifiedStartDate:
+          type: string
+          pattern: "yyyy-MM-dd"
+          description: "The date on which a citizen  is notified by the LA who will pay for the care"
+          example: "2017-01-19"
+          maxLength: 10
+        paymentStartDate:
+          type: string
+          pattern: "yyyy-MM-dd"
+          example: "2021-01-28"
+          description: "Start date from which the LA will start calculating the amount of money they will later recover from the citizen’s assets to pay care home fees."
+          maxLength: 10
+        deferredPaymentArrangements:
+          type: boolean
+          example: true
+          description: "A True/False value to indicate if deferred payment arrangements are in place."
+      required:
+        - careType
+
+    ScottishQuestions:
+      type: object
+      properties:
+        freePersonalCare:
+          type: boolean
+          description: "A True/False value to indicate if the citizen is eligible for free personal care."
+          example: true
+        freePersonalCareAgreed:
+          type: boolean
+          description: "A True/False value to indicate whether free personal care has been agreed."
+          example: true
+        dateAgreedFrom:
+          type: string
+          pattern: "yyyy-MM-dd"
+          example: "2017-01-19"
+          description: "The date agreed for either personal or nursing care and this could be a restrospective date."
+          maxLength: 10
+        isFundungForNursingCareOnly:
+          type: boolean
+          description: "A True/False value to indicate whether the funding is paid towards nursing care only."
+          example: true
+
+    CareHomeStay:
+      type: object
+      properties:
+        careHome:
+          $ref: '#/components/schemas/CareHome'
+        isCurrentlyStaying:
+          type: boolean
+          description: "A True/False value to indicate whether the citizen is currently admitted to and staying in a care home."
+          example: false
+        stayFrom:
+          type: string
+          pattern: "yyyy-MM-dd"
+          example: "2017-01-19"
+          description: "This refers to the start date of the current stay of the citizen in the care home."
+          maxLength: 10
+        stayTo:
+          type: string
+          pattern: "yyyy-MM-dd"
+          example: "2017-01-19"
+          description: "This refers to the end date of the current stay of the citizen in the care home."
+          maxLength: 10
+        referredFromHospital:
+          $ref: '#/components/schemas/ReferredFromHospital'
+        typeOfStay:
+          $ref: '#/components/schemas/TypeOfStay'
+        isReadmission:
+          type: boolean
+          description: "A True/False value indicating whether the citizen has returned to the same care home following a stay in hospital."
+          example: false
+      required:
+        - stayFrom
+        - referredFromHospital
+        - typeOfStay
+        - isReadmission
+
+    ConsumerGuid:
+      type: object
+      properties:
+        consumerGuid:
+          type: string
+          maxLength: 64
+          description: "The Consumer GUID for a citizen who is of interest to DWP because of an ongoing claim."
+          example: "4d3e1c1ce4715ad56a7e5135a800b15a41a2d4748670e9892731024f15e75aa1"
+
+    UPRN:
+      type: string
+      description: "A Unique Property Reference Number (UPRN) is a unique numeric identifier for every addressable location in Great Britain."
+      example: "72542560"
+      maxLength: 16
+
+    LocalAuthorityId:
+      type: string
+      format: "^[0-9]{6}$"
+      example: "012345"
+      maxLength: 6
+      description: "Local Authority ID: Code allocated by DWP IAD"
+
+    ReferredFromHospital:
+      type: boolean
+      example: true
+      description: "A True/False value to indicate whether the citizen has been referred to a care home from a hospital. A stay is one or more nights spent in a care home. This describes the minimum length for a stay in a care home (e.g. temporary)"
+
+    TypeOfStay:
+      type: string
+      description: "The type of stay in the care home."
+      maxLength: 32
+      enum:
+        - "Limited time - respite"
+        - "Limited time - rehabilitation"
+        - "Limited time - assessment period"
+        - "Indefinite - temporary"
+        - "Indefinite - permanent"
+
+    CareType:
+      type: string
+      description: "The care can be for: Personal Care, Nursing Care or Both"
+      maxLength: 14
+      example: "Nursing Care"
+      enum:
+        - "Personal Care"
+        - "Nursing Care"
+        - "Both"
+        - "Not decided yet"
+
+    FundingType:
+      type: string
+      description: "Who is paying for the care (Self / LA / Deferred)"
+      maxLength: 50
+      example: "Self funding"
+      enum:
+        - "Self funding"
+        - "LA Funding – Paid to Care Home"
+        - "LA Funding – Direct Payment to Citizen"
+        - "Deferred payment arrangement"
+        - "NHS funding - full payment for nursing care"
+        - "NHS funding - partial payment for nursing care"
+        - "NHS funding - assessment funding under Covid-19"
+        - "Funded personal care (Scotland)"
+        - "Not yet known"
+
+    Legislation:
+      type: string
+      description: "The act or regulations under which funding is provided."
+      maxLength: 3
+      example: "EW1"
+      enum:
+        - "EW1"
+        - "EW2"
+        - "EW3"
+        - "EW4"
+        - "EW5"
+        - "S01"
+        - "S02"
+        - "S03"
+        - "S04"
+        - "S05"
+        - "S06"
+        - "SE1"
+        - "SE2"
+        - "SE3"
+        - "SE4"
+        - "SE5"
+        - "SE6"
+
+    AddressLine1:
+      type: string
+      example: "Address line 1"
+      description: "The building name is a description applied to a single building or a small group of buildings"
+      maxLength: 50
+
+    AddressLine2:
+      type: string
+      example: "Address line 2"
+      description: "A geographical or postal location, comprising of street name and other address designations."
+      maxLength: 100
+
+    AddressLine3:
+      type: string
+      example: "Address line 3"
+      description: "Address Line 3 can cover the outer-city suburb areas within a city,if applicable."
+      maxLength: 100
+
+    AddressCity:
+      type: string
+      example: "City"
+      description: "The town or city in which in which the citizen lives."
+      maxLength: 30
+
+    AddressPostCode:
+      type: string
+      pattern: "^[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][ABD-HJLNP-UW-Z]{2}$"
+      example: "NE1 1NE"
+      description: "A postcode is an abbreviated form of address made up of combinations of between five and seven alphanumeric characters."
+      maxLength: 8
+
+    AddressCountry:
+      type: string
+      description: "A sovereign territory in which the citizen lives."
+      example: "E"
+      enum:
+        - "E"
+        - "S"
+        - "N"
+        - "L"
+        - "M"
+        - "J"
+
+    Error400Details:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                default: "400"
+              detail:
+                type: string
+                default: "The request is malformed or the body cannot be parsed/understood. Please check request."
+
+    Error405Details:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                default: "405"
+              detail:
+                type: string
+                default: "Method Not Allowed."
+
+    Error422Details:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                default: "422"
+              detail:
+                type: string
+                default: "The data supplied could not be processed."
+
+    Error404ConfirmDetails:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                default: "404"
+              detail:
+                type: string
+                default: "No citizen of interest found matching the data supplied."
+
+    Error503Details:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                default: "503"
+              detail:
+                type: string
+                default: "Upstream services unavailable."
+
+  securitySchemes:
+    Oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://gateway.dwp.gov.uk:8443/citizen-information/oauth2
+          scopes: {}
