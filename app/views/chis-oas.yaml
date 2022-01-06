@@ -396,7 +396,7 @@ components:
           $ref: '#/components/schemas/LocalAuthorityId'
         hospitalAddress:
           $ref: '#/components/schemas/HospitalAddress'
-        currentHospitalAdmissionDate: #Clarify: this is not 'current' hopsital stay have a discharge date? What does 'current' mean in this context? Do we expect LAs to inform us when a citizen in a Care Home is admitted to hospital? Will they know?
+        currentHospitalAdmissionDate: #Clarify: What does 'current' mean in this context? Do we expect LAs to inform us when a citizen in a Care Home is admitted to hospital? Will they know? This is separate from the hospitalisation data we require in other specifically defined events (egi.e. careHomeChange)
           type: string
           description: "The date of admission to hospital."
           pattern: "yyyy-MM-dd"
@@ -455,7 +455,7 @@ components:
         - careHomeAddressLine2
         - careHomePostCode
 
-    HospitalAddress:
+    HospitalAddress: #for heirarchy, should this be below 'Hospitilisation'? It's used as part of that object.
       type: object
       properties:
         hospitalName:
