@@ -24,7 +24,9 @@ info:
 
     *** This is a draft document, this service is not in Production. ***
 
-    The service provides two endpoints.  One is used to 'confirm' a citizen is of interest in regards to their care home residency status and the other is used to 'notify' DWP of a change in their residency status.
+    The service provides two endpoints.
+
+    One is used to 'confirm' if a citizen's care home residency is of interest to DWP and the other is used to 'notify' DWP of a change in their residency status.
 
     The /confirm/{consumerGuid} endpoint takes a GET and is used to confirm whether the identified citizen's care home status is of interest to DWP.  The Consumer GUID provided identifies the citizen
     and is obtained by a separate call to the Citizen API / Match service.
@@ -33,7 +35,7 @@ info:
     by supplying a corresponding object within the JSON payload (no more than one of each notification type, minimum of one notification) :
     <ul>
       <li> Admission (admission) - initial admission to a care home or re-admission to the same care home.
-      <li> Change of circumstances (changeOfCircumstances) - e.g. moving to a new care home
+      <li> Change of circumstances (changeOfCircumstances) - for example, moving to a new care home
       <li> Leaving a care home (leavingCareHome)
       <li> Hospital admission (hospitalAdmission)
       <li> Funding change (fundingChange)
@@ -202,7 +204,8 @@ components:
     CorrelationID:
       name: correlation-id
       in: header
-      description: Identifier used to locate related transactions (e.g. 12345678-1234-1234-1234-123456789012)
+      description: Identifier used to locate related transactions
+      example: "12345678-1234-1234-1234-123456789012"
       required: true
       schema:
         type: string
@@ -216,7 +219,7 @@ components:
     InstigatingSystem:
       name: instigating-system
       in: header
-      description: 'External: Name of sending external system e.g. an external system or application name.'
+      description: 'External: Name of sending external system, for example an external system or application name.'
       required: true
       schema:
         type: string
@@ -230,7 +233,7 @@ components:
     TransactionDate:
       name: transaction-date
       in: header
-      description: "Date & time when the communication was instigated"
+      description: "Date and time when the communication was instigated."
       example: "2021-05-21T17:12:34"
       required: true
       schema:
@@ -238,7 +241,7 @@ components:
     SessionId:
       name: session-id
       in: header
-      description: ""
+      description: "" #(Description needed)
       required: false
       schema:
         type: string
@@ -309,25 +312,25 @@ components:
           properties:
             previousAddressUprn:
               $ref: '#/components/schemas/UPRN'
-              description: "We are expecting a UPRFalse or the full address, but not both."
+              description: "We are expecting a UPRN or the full address, but not both."
             previousAddressLine1:
               $ref: '#/components/schemas/AddressLine1'
-              description: "Building Name or number."
+              description: "Building number or name of the citizen's address before they moved into the care home."
             previousAddressLine2:
               $ref: '#/components/schemas/AddressLine2'
-              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+              description: "Second line of the citizen's address before they moved into the care home."
             previousAddressLine3:
               $ref: '#/components/schemas/AddressLine3'
-              description: "The previous address at which the citizen lived immediately prior to moving into care home. "
+              description: "Third line of the citizen's address before they moved into the care home."
             previousCity:
               $ref: '#/components/schemas/AddressCity'
-              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+              description: "The town or city of the citizen's address before they moved into the care home."
             previousPostCode:
               $ref: '#/components/schemas/AddressPostCode'
-              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+              description: "The postcode of the citizen's address before they moved into the care home."
             previousCountry:
               $ref: '#/components/schemas/AddressCountry'
-              description: "The previous address at which the citizen lived immediately prior to moving into care home."
+              description: "The country of the citizen's address before they moved into the care home."
         previousHospitalAdmissions:
           type: array
           items:
@@ -356,30 +359,30 @@ components:
           maxLength: 10
         typeOfStay:
           $ref: '#/components/schemas/TypeOfStay'
-        futureAddress:
+        futureAddress: #Clarify: are we expecting to get this *before* it happens? Otherwise it's not 'future', it's newAddress, afterCareAddress, etc. I;ve rewritten the descriptions for the scenario where we are informed after the event.
           type: object
           properties:
             futureAddressUprn:
               $ref: '#/components/schemas/UPRN'
-              description: "We are expecting a UPRFalse or the full address, but not both."
+              description: "We are expecting a UPRN or the full address, but not both."
             futureAddressLine1:
               $ref: '#/components/schemas/AddressLine1'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "Building number or name of the citizen's address after they left the care home."
             futureAddressLine2:
               $ref: '#/components/schemas/AddressLine2'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "Second line of the citizen's address after they left the care home."
             futureAddressLine3:
               $ref: '#/components/schemas/AddressLine3'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "Third line of the citizen's address after they left the care home."
             futureCity:
               $ref: '#/components/schemas/AddressCity'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "The town or city of the citizen's address after they left the care home."
             futurePostCode:
               $ref: '#/components/schemas/AddressPostCode'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "The postcode of the citizen's address after they left the care home."
             futureCountry:
               $ref: '#/components/schemas/AddressCountry'
-              description: "The future address to which the citizen will be going after they move out of a care home."
+              description: "The country of the citizen's address after they left the care home."
       required:
         - localAuthorityId
         - careAdmissionDate
@@ -393,15 +396,15 @@ components:
           $ref: '#/components/schemas/LocalAuthorityId'
         hospitalAddress:
           $ref: '#/components/schemas/HospitalAddress'
-        currentHospitalAdmissionDate:
+        currentHospitalAdmissionDate: #Clarify: What does 'current' mean in this context? Do we expect LAs to inform us when a citizen in a Care Home is admitted to hospital? Will they know? This is separate from the hospitalisation data we require in other specifically defined events (egi.e. careHomeChange)
           type: string
-          description: "The date of admission to hospital, for the current stay."
+          description: "The date of admission to hospital."
           pattern: "yyyy-MM-dd"
           example : "2021-04-28"
           maxLength: 10
         currentHospitalDischargeDate:
           type: string
-          description: "The date of discharge from hospital, for the stay."
+          description: "The date of discharge from hospital."
           pattern: "yyyy-MM-dd"
           example : "2021-05-28"
           maxLength: 10
@@ -425,12 +428,12 @@ components:
       properties:
         careHomeId:
           type: string
-          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id."
+          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id." #Why only CQC - what about the other ones for the other regions?
           example: "SIN-12345678-abcd"
           maxLength: 17
         careHomeRoomNumber:
           type: string
-          description: "The room number assigned to a citizen throughout a given stay in a Care Home."
+          description: "The room number assigned to the citizen in a Care Home."
           example: "123"
           maxLength: 3
         careHomeUprn:
@@ -452,7 +455,7 @@ components:
         - careHomeAddressLine2
         - careHomePostCode
 
-    HospitalAddress:
+    HospitalAddress: #for heirarchy, should this be below 'Hospitilisation'? It's used as part of that object.
       type: object
       properties:
         hospitalName:
@@ -465,22 +468,22 @@ components:
           description: "We are expecting a UPRN or the full address, but not both. Hospital address/UPRN are optional as it may not always be available."
         hospitalAddressLine1:
           $ref: '#/components/schemas/AddressLine1'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "First line of the address of the hospital, if known."
         hospitalAddressLine2:
           $ref: '#/components/schemas/AddressLine2'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "Second line of the address of the hospital, if known."
         hospitalAddressLine3:
           $ref: '#/components/schemas/AddressLine3'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "Third line of the address of the hospital, if known."
         hospitalCity:
           $ref: '#/components/schemas/AddressCity'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "The town or city of the address of the hospital, if known."
         hospitalPostCode:
           $ref: '#/components/schemas/AddressPostCode'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "The postcode of the address of the hospital, if known."
         hospitalCountry:
           $ref: '#/components/schemas/AddressCountry'
-          description: "The address of the hospital the citizen is currently  admitted to, if known."
+          description: "The country of the address of the hospital, if known."
 
     Hospitalisation:
       type: object
@@ -489,31 +492,31 @@ components:
           $ref: '#/components/schemas/HospitalAddress'
         isCurrentlyHospitalised:
           type: boolean
-          description: "A True/False value to indicate whether the citizen is currently hospitalised."
+          description: "A True/False value to indicate whether the citizen is currently in hospital."
           example: false
-        currentHospitalAdmissionDate:
+        currenttHospitalAdmissionDate: #not current... need to clarify this with Miruna/BA/Business Architecture
           type: string
-          description: "The most recent hospital admission date, where there has been one within a month prior to going to a care home."
+          description: "The most recent hospital admission date, if there is one within a month before going to a care home."
           pattern: "yyyy-MM-dd"
           example : "2017-01-19"
-        currentHospitalDischargeDate:
+        currentHospitalDischargeDate: #not current...
           type: string
           description: "The most recent hospital discharge date, which could be the same date as the care home admission date."
           pattern: "yyyy-MM-dd"
           example : "2017-01-19"
         hospitalisedInPreviousMonth:
           type: string
-          description: "A Truee/False/Unknown value to indicate whether the citizen has been hospitalised in previous month."
+          description: "A True/False/Unknown value to indicate whether the citizen has been in hospital in previous month." #Can this be above the hospital admission date?
           example: true
           maxLength: 7
         previousHospitalAdmissionDate:
           type: string
-          description: "The date citizen was admitted to the hospital in previous stay."
+          description: "The date the citizen was admitted to the hospital in previous stay." #How does this relate to the currentHospitalAdmissionDate?
           pattern: "yyyy-MM-dd"
           example : "2017-01-19"
         previousHospitalDischargeDate:
           type: string
-          description: "The date citizen was discharged from the hospital dureing previous stay."
+          description: "The date the citizen was discharged from the hospital during previous stay."
           pattern: "yyyy-MM-dd"
           example : "2017-01-19"
 
@@ -526,14 +529,14 @@ components:
           type: string
           pattern: "yyyy-MM-dd"
           example: "2017-01-19"
-          description: "The date on which a citizen is notified by the LA about the funding decision (i.e. who pays for the stay in the care home)."
+          description: "The date the citizen was notified by the LA about the funding decision (a decision on who pays for the stay in the care home)."
           maxLength: 10
         fundingType:
           $ref: '#/components/schemas/FundingType'
         isCurrentlyFunded:
           type: boolean
           example: true
-          description: "A True/False value to indicate whether the citizen's stay in a care home is currently funded."
+          description: "A True/False value to indicate whether the citizen's stay in a care home is currently funded by the LA."
         legislation:
           $ref: '#/components/schemas/Legislation'
         scottishQuestions:
@@ -541,7 +544,7 @@ components:
         paymentNotifiedStartDate:
           type: string
           pattern: "yyyy-MM-dd"
-          description: "The date on which a citizen  is notified by the LA who will pay for the care"
+          description: "The date on which a citizen is notified by the LA who will pay for the care" #how is this different from fundingDecisionNotifiedDate - Miruna/bus arch
           example: "2017-01-19"
           maxLength: 10
         paymentStartDate:
@@ -572,9 +575,9 @@ components:
           type: string
           pattern: "yyyy-MM-dd"
           example: "2017-01-19"
-          description: "The date agreed for either personal or nursing care and this could be a restrospective date."
+          description: "The date agreed for either personal or nursing care and this could be a retrospective date."
           maxLength: 10
-        isFundungForNursingCareOnly:
+        isFundingForNursingCareOnly:
           type: boolean
           description: "A True/False value to indicate whether the funding is paid towards nursing care only."
           example: true
