@@ -241,7 +241,7 @@ components:
     SessionId:
       name: session-id
       in: header
-      description: "" #(Description needed)
+      description: ""
       required: false
       schema:
         type: string
@@ -359,28 +359,28 @@ components:
           maxLength: 10
         typeOfStay:
           $ref: '#/components/schemas/TypeOfStay'
-        futureAddress: #Clarify: are we expecting to get this *before* it happens? Otherwise it's not 'future', it's newAddress, afterCareAddress, etc. I;ve rewritten the descriptions for the scenario where we are informed after the event.
+        nextAddress:
           type: object
           properties:
-            futureAddressUprn:
+            nextAddressUprn:
               $ref: '#/components/schemas/UPRN'
               description: "We are expecting a UPRN or the full address, but not both."
-            futureAddressLine1:
+            nextAddressLine1:
               $ref: '#/components/schemas/AddressLine1'
               description: "Building number or name of the citizen's address after they left the care home."
-            futureAddressLine2:
+            nextAddressLine2:
               $ref: '#/components/schemas/AddressLine2'
               description: "Second line of the citizen's address after they left the care home."
-            futureAddressLine3:
+            nextAddressLine3:
               $ref: '#/components/schemas/AddressLine3'
               description: "Third line of the citizen's address after they left the care home."
-            futureCity:
+            nextCity:
               $ref: '#/components/schemas/AddressCity'
               description: "The town or city of the citizen's address after they left the care home."
-            futurePostCode:
+            nextPostCode:
               $ref: '#/components/schemas/AddressPostCode'
               description: "The postcode of the citizen's address after they left the care home."
-            futureCountry:
+            nextCountry:
               $ref: '#/components/schemas/AddressCountry'
               description: "The country of the citizen's address after they left the care home."
       required:
@@ -396,13 +396,13 @@ components:
           $ref: '#/components/schemas/LocalAuthorityId'
         hospitalAddress:
           $ref: '#/components/schemas/HospitalAddress'
-        currentHospitalAdmissionDate: #Clarify: What does 'current' mean in this context? Do we expect LAs to inform us when a citizen in a Care Home is admitted to hospital? Will they know? This is separate from the hospitalisation data we require in other specifically defined events (egi.e. careHomeChange)
+        recentHospitalAdmissionDate:
           type: string
           description: "The date of admission to hospital."
           pattern: "yyyy-MM-dd"
           example : "2021-04-28"
           maxLength: 10
-        currentHospitalDischargeDate:
+        recentHospitalDischargeDate:
           type: string
           description: "The date of discharge from hospital."
           pattern: "yyyy-MM-dd"
@@ -428,7 +428,7 @@ components:
       properties:
         careHomeId:
           type: string
-          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id." #Why only CQC - what about the other ones for the other regions?
+          description: "To be provided in addition to the care home address OR UPRN (optional). CQC registration number/id."
           example: "SIN-12345678-abcd"
           maxLength: 17
         careHomeRoomNumber:
@@ -455,7 +455,42 @@ components:
         - careHomeAddressLine2
         - careHomePostCode
 
-    HospitalAddress: #for heirarchy, should this be below 'Hospitilisation'? It's used as part of that object.
+    Hospitalisation:
+      type: object
+      properties:
+        hospitalAddress:
+          $ref: '#/components/schemas/HospitalAddress'
+        isCurrentlyHospitalised:
+          type: boolean
+          description: "A True/False value to indicate whether the citizen is currently in hospital."
+          example: false
+        hospitalisedInPreviousMonth:
+          type: string
+          description: "A True/False/Unknown value to indicate whether the citizen has been in hospital in previous month."
+          example: true
+          maxLength: 7
+        recentHospitalAdmissionDate:
+          type: string
+          description: "The most recent hospital admission date, if there is a hospital stay within a month before going to a care home."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        recentHospitalDischargeDate:
+          type: string
+          description: "The most recent hospital discharge date, if there is a hospital stay within a month before going to a care home. This could be the same date as the care home admission date."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        previousHospitalAdmissionDate:
+          type: string
+          description: "The date the citizen was admitted to the hospital in previous stay."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+        previousHospitalDischargeDate:
+          type: string
+          description: "The date the citizen was discharged from the hospital during previous stay."
+          pattern: "yyyy-MM-dd"
+          example : "2017-01-19"
+
+    HospitalAddress:
       type: object
       properties:
         hospitalName:
@@ -464,7 +499,7 @@ components:
           example: "General Hospital"
           maxLength: 50
         hospitalUprn:
-          $ref: '#/components/schemas/UPRN'
+          $ref: '/components/schemas/UPRN'
           description: "We are expecting a UPRN or the full address, but not both. Hospital address/UPRN are optional as it may not always be available."
         hospitalAddressLine1:
           $ref: '#/components/schemas/AddressLine1'
@@ -484,41 +519,6 @@ components:
         hospitalCountry:
           $ref: '#/components/schemas/AddressCountry'
           description: "The country of the address of the hospital, if known."
-
-    Hospitalisation:
-      type: object
-      properties:
-        hospitalAddress:
-          $ref: '#/components/schemas/HospitalAddress'
-        isCurrentlyHospitalised:
-          type: boolean
-          description: "A True/False value to indicate whether the citizen is currently in hospital."
-          example: false
-        currenttHospitalAdmissionDate: #not current... need to clarify this with Miruna/BA/Business Architecture
-          type: string
-          description: "The most recent hospital admission date, if there is one within a month before going to a care home."
-          pattern: "yyyy-MM-dd"
-          example : "2017-01-19"
-        currentHospitalDischargeDate: #not current...
-          type: string
-          description: "The most recent hospital discharge date, which could be the same date as the care home admission date."
-          pattern: "yyyy-MM-dd"
-          example : "2017-01-19"
-        hospitalisedInPreviousMonth:
-          type: string
-          description: "A True/False/Unknown value to indicate whether the citizen has been in hospital in previous month." #Can this be above the hospital admission date?
-          example: true
-          maxLength: 7
-        previousHospitalAdmissionDate:
-          type: string
-          description: "The date the citizen was admitted to the hospital in previous stay." #How does this relate to the currentHospitalAdmissionDate?
-          pattern: "yyyy-MM-dd"
-          example : "2017-01-19"
-        previousHospitalDischargeDate:
-          type: string
-          description: "The date the citizen was discharged from the hospital during previous stay."
-          pattern: "yyyy-MM-dd"
-          example : "2017-01-19"
 
     Funding:
       type: object
@@ -544,7 +544,7 @@ components:
         paymentNotifiedStartDate:
           type: string
           pattern: "yyyy-MM-dd"
-          description: "The date on which a citizen is notified by the LA who will pay for the care" #how is this different from fundingDecisionNotifiedDate - Miruna/bus arch
+          description: "The date on which a citizen is notified by the LA who will pay for the care" #this needs to be reviewed as per accompanying notes
           example: "2017-01-19"
           maxLength: 10
         paymentStartDate:
